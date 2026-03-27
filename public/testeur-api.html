@@ -1,736 +1,1143 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Testeur API — Réservation Bénin</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg: #0a0a0a;
-    --surface: #111111;
-    --card: #181818;
-    --border: #2a2a2a;
-    --accent: #e8a838;
-    --accent2: #e85d24;
-    --green: #2ecc71;
-    --red: #e74c3c;
-    --text: #f0ece4;
-    --muted: #888;
-    --mono: 'Space Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    display: flex;
-  }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Testeur API — Réservation Bénin</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0a0a0a;
+                --surface: #111111;
+                --card: #181818;
+                --border: #2a2a2a;
+                --accent: #e8a838;
+                --accent2: #e85d24;
+                --green: #2ecc71;
+                --red: #e74c3c;
+                --text: #f0ece4;
+                --muted: #888;
+                --mono: "Space Mono", monospace;
+                --sans: "Syne", sans-serif;
+            }
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: var(--sans);
+                min-height: 100vh;
+                display: flex;
+            }
 
-  /* SIDEBAR */
-  .sidebar {
-    width: 260px;
-    min-height: 100vh;
-    background: var(--surface);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-  }
-  .logo {
-    padding: 28px 20px 20px;
-    border-bottom: 1px solid var(--border);
-  }
-  .logo h1 {
-    font-size: 16px;
-    font-weight: 800;
-    color: var(--accent);
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  .logo p { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: var(--mono); }
+            /* SIDEBAR */
+            .sidebar {
+                width: 260px;
+                min-height: 100vh;
+                background: var(--surface);
+                border-right: 1px solid var(--border);
+                display: flex;
+                flex-direction: column;
+                flex-shrink: 0;
+            }
+            .logo {
+                padding: 28px 20px 20px;
+                border-bottom: 1px solid var(--border);
+            }
+            .logo h1 {
+                font-size: 16px;
+                font-weight: 800;
+                color: var(--accent);
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+            }
+            .logo p {
+                font-size: 11px;
+                color: var(--muted);
+                margin-top: 4px;
+                font-family: var(--mono);
+            }
 
-  .token-box {
-    margin: 16px;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 12px;
-  }
-  .token-box label { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; font-family: var(--mono); }
-  .token-display {
-    margin-top: 6px;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--green);
-    word-break: break-all;
-    max-height: 48px;
-    overflow: hidden;
-    line-height: 1.5;
-  }
-  .token-display.empty { color: var(--muted); font-style: italic; }
+            .token-box {
+                margin: 16px;
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 12px;
+            }
+            .token-box label {
+                font-size: 10px;
+                color: var(--accent);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                font-family: var(--mono);
+            }
+            .token-display {
+                margin-top: 6px;
+                font-family: var(--mono);
+                font-size: 10px;
+                color: var(--green);
+                word-break: break-all;
+                max-height: 48px;
+                overflow: hidden;
+                line-height: 1.5;
+            }
+            .token-display.empty {
+                color: var(--muted);
+                font-style: italic;
+            }
 
-  .nav-section { padding: 8px 16px 4px; }
-  .nav-section span {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--muted);
-    font-family: var(--mono);
-  }
-  .nav-btn {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    width: calc(100% - 32px);
-    margin: 2px 16px;
-    padding: 9px 12px;
-    background: none;
-    border: none;
-    border-radius: 6px;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 13px;
-    cursor: pointer;
-    text-align: left;
-    transition: background 0.15s;
-  }
-  .nav-btn:hover { background: var(--card); }
-  .nav-btn.active { background: var(--card); color: var(--accent); }
-  .nav-btn .method {
-    font-family: var(--mono);
-    font-size: 9px;
-    font-weight: 700;
-    padding: 2px 5px;
-    border-radius: 3px;
-    min-width: 36px;
-    text-align: center;
-  }
-  .get  { background: #1a3a2a; color: #2ecc71; }
-  .post { background: #3a2a10; color: #e8a838; }
-  .put  { background: #1a2a3a; color: #5bc0de; }
-  .del  { background: #3a1a1a; color: #e74c3c; }
+            .nav-section {
+                padding: 8px 16px 4px;
+            }
+            .nav-section span {
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: var(--muted);
+                font-family: var(--mono);
+            }
+            .nav-btn {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                width: calc(100% - 32px);
+                margin: 2px 16px;
+                padding: 9px 12px;
+                background: none;
+                border: none;
+                border-radius: 6px;
+                color: var(--text);
+                font-family: var(--sans);
+                font-size: 13px;
+                cursor: pointer;
+                text-align: left;
+                transition: background 0.15s;
+            }
+            .nav-btn:hover {
+                background: var(--card);
+            }
+            .nav-btn.active {
+                background: var(--card);
+                color: var(--accent);
+            }
+            .nav-btn .method {
+                font-family: var(--mono);
+                font-size: 9px;
+                font-weight: 700;
+                padding: 2px 5px;
+                border-radius: 3px;
+                min-width: 36px;
+                text-align: center;
+            }
+            .get {
+                background: #1a3a2a;
+                color: #2ecc71;
+            }
+            .post {
+                background: #3a2a10;
+                color: #e8a838;
+            }
+            .put {
+                background: #1a2a3a;
+                color: #5bc0de;
+            }
+            .del {
+                background: #3a1a1a;
+                color: #e74c3c;
+            }
 
-  /* MAIN */
-  .main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+            /* MAIN */
+            .main {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                overflow: hidden;
+            }
 
-  .topbar {
-    padding: 20px 28px;
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: var(--surface);
-  }
-  .method-badge {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 4px;
-  }
-  .url-display {
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--muted);
-    flex: 1;
-  }
-  .url-display span { color: var(--text); }
+            .topbar {
+                padding: 20px 28px;
+                border-bottom: 1px solid var(--border);
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                background: var(--surface);
+            }
+            .method-badge {
+                font-family: var(--mono);
+                font-size: 12px;
+                font-weight: 700;
+                padding: 4px 10px;
+                border-radius: 4px;
+            }
+            .url-display {
+                font-family: var(--mono);
+                font-size: 13px;
+                color: var(--muted);
+                flex: 1;
+            }
+            .url-display span {
+                color: var(--text);
+            }
 
-  .content {
-    flex: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0;
-    overflow: hidden;
-  }
+            .content {
+                flex: 1;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0;
+                overflow: hidden;
+            }
 
-  .panel {
-    padding: 24px 28px;
-    overflow-y: auto;
-    border-right: 1px solid var(--border);
-  }
-  .panel:last-child { border-right: none; }
-  .panel h3 {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--accent);
-    margin-bottom: 16px;
-    font-family: var(--mono);
-  }
+            .panel {
+                padding: 24px 28px;
+                overflow-y: auto;
+                border-right: 1px solid var(--border);
+            }
+            .panel:last-child {
+                border-right: none;
+            }
+            .panel h3 {
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.12em;
+                color: var(--accent);
+                margin-bottom: 16px;
+                font-family: var(--mono);
+            }
 
-  .field-group { margin-bottom: 14px; }
-  .field-group label {
-    display: block;
-    font-size: 11px;
-    color: var(--muted);
-    margin-bottom: 5px;
-    font-family: var(--mono);
-  }
-  .field-group input,
-  .field-group textarea,
-  .field-group select {
-    width: 100%;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    font-family: var(--mono);
-    font-size: 12px;
-    padding: 9px 12px;
-    outline: none;
-    transition: border-color 0.15s;
-    resize: vertical;
-  }
-  .field-group input:focus,
-  .field-group textarea:focus,
-  .field-group select:focus {
-    border-color: var(--accent);
-  }
-  .field-group textarea { min-height: 120px; }
-  select option { background: var(--card); }
+            .field-group {
+                margin-bottom: 14px;
+            }
+            .field-group label {
+                display: block;
+                font-size: 11px;
+                color: var(--muted);
+                margin-bottom: 5px;
+                font-family: var(--mono);
+            }
+            .field-group input,
+            .field-group textarea,
+            .field-group select {
+                width: 100%;
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                color: var(--text);
+                font-family: var(--mono);
+                font-size: 12px;
+                padding: 9px 12px;
+                outline: none;
+                transition: border-color 0.15s;
+                resize: vertical;
+            }
+            .field-group input:focus,
+            .field-group textarea:focus,
+            .field-group select:focus {
+                border-color: var(--accent);
+            }
+            .field-group textarea {
+                min-height: 120px;
+            }
+            select option {
+                background: var(--card);
+            }
 
-  .send-btn {
-    width: 100%;
-    padding: 12px;
-    background: var(--accent);
-    color: #000;
-    border: none;
-    border-radius: 6px;
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 800;
-    cursor: pointer;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    transition: opacity 0.15s, transform 0.1s;
-    margin-top: 8px;
-  }
-  .send-btn:hover { opacity: 0.9; transform: translateY(-1px); }
-  .send-btn:active { transform: translateY(0); }
-  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+            .send-btn {
+                width: 100%;
+                padding: 12px;
+                background: var(--accent);
+                color: #000;
+                border: none;
+                border-radius: 6px;
+                font-family: var(--sans);
+                font-size: 14px;
+                font-weight: 800;
+                cursor: pointer;
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                transition:
+                    opacity 0.15s,
+                    transform 0.1s;
+                margin-top: 8px;
+            }
+            .send-btn:hover {
+                opacity: 0.9;
+                transform: translateY(-1px);
+            }
+            .send-btn:active {
+                transform: translateY(0);
+            }
+            .send-btn:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
 
-  /* RESPONSE */
-  .response-area {
-    padding: 24px 28px;
-    overflow-y: auto;
-  }
-  .response-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 16px;
-  }
-  .status-badge {
-    font-family: var(--mono);
-    font-size: 12px;
-    font-weight: 700;
-    padding: 3px 10px;
-    border-radius: 4px;
-  }
-  .status-ok  { background: #1a3a2a; color: var(--green); }
-  .status-err { background: #3a1a1a; color: var(--red); }
-  .status-idle { background: var(--border); color: var(--muted); }
-  .response-time { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+            /* RESPONSE */
+            .response-area {
+                padding: 24px 28px;
+                overflow-y: auto;
+            }
+            .response-header {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin-bottom: 16px;
+            }
+            .status-badge {
+                font-family: var(--mono);
+                font-size: 12px;
+                font-weight: 700;
+                padding: 3px 10px;
+                border-radius: 4px;
+            }
+            .status-ok {
+                background: #1a3a2a;
+                color: var(--green);
+            }
+            .status-err {
+                background: #3a1a1a;
+                color: var(--red);
+            }
+            .status-idle {
+                background: var(--border);
+                color: var(--muted);
+            }
+            .response-time {
+                font-family: var(--mono);
+                font-size: 11px;
+                color: var(--muted);
+            }
 
-  .json-output {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px;
-    font-family: var(--mono);
-    font-size: 12px;
-    line-height: 1.7;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: #ccc;
-    min-height: 200px;
-  }
-  .json-key    { color: #9cdcfe; }
-  .json-string { color: #ce9178; }
-  .json-number { color: #b5cea8; }
-  .json-bool   { color: #569cd6; }
-  .json-null   { color: #808080; }
+            .json-output {
+                background: var(--card);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 16px;
+                font-family: var(--mono);
+                font-size: 12px;
+                line-height: 1.7;
+                white-space: pre-wrap;
+                word-break: break-word;
+                color: #ccc;
+                min-height: 200px;
+            }
+            .json-key {
+                color: #9cdcfe;
+            }
+            .json-string {
+                color: #ce9178;
+            }
+            .json-number {
+                color: #b5cea8;
+            }
+            .json-bool {
+                color: #569cd6;
+            }
+            .json-null {
+                color: #808080;
+            }
 
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
-  .empty-state p { font-size: 13px; line-height: 1.6; }
+            .empty-state {
+                text-align: center;
+                padding: 60px 20px;
+                color: var(--muted);
+            }
+            .empty-state .icon {
+                font-size: 40px;
+                margin-bottom: 12px;
+                opacity: 0.4;
+            }
+            .empty-state p {
+                font-size: 13px;
+                line-height: 1.6;
+            }
 
-  .loading-dots span {
-    display: inline-block;
-    width: 6px; height: 6px;
-    background: var(--accent);
-    border-radius: 50%;
-    margin: 0 3px;
-    animation: bounce 0.8s infinite;
-  }
-  .loading-dots span:nth-child(2) { animation-delay: 0.15s; }
-  .loading-dots span:nth-child(3) { animation-delay: 0.3s; }
-  @keyframes bounce {
-    0%,80%,100% { transform: translateY(0); }
-    40% { transform: translateY(-6px); }
-  }
+            .loading-dots span {
+                display: inline-block;
+                width: 6px;
+                height: 6px;
+                background: var(--accent);
+                border-radius: 50%;
+                margin: 0 3px;
+                animation: bounce 0.8s infinite;
+            }
+            .loading-dots span:nth-child(2) {
+                animation-delay: 0.15s;
+            }
+            .loading-dots span:nth-child(3) {
+                animation-delay: 0.3s;
+            }
+            @keyframes bounce {
+                0%,
+                80%,
+                100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-6px);
+                }
+            }
 
-  .info-box {
-    background: #1a2a1a;
-    border: 1px solid #2a4a2a;
-    border-radius: 6px;
-    padding: 10px 14px;
-    font-size: 12px;
-    color: #8bc48b;
-    margin-bottom: 14px;
-    font-family: var(--mono);
-    line-height: 1.5;
-  }
+            .info-box {
+                background: #1a2a1a;
+                border: 1px solid #2a4a2a;
+                border-radius: 6px;
+                padding: 10px 14px;
+                font-size: 12px;
+                color: #8bc48b;
+                margin-bottom: 14px;
+                font-family: var(--mono);
+                line-height: 1.5;
+            }
 
-  ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-</style>
-</head>
-<body>
+            ::-webkit-scrollbar {
+                width: 4px;
+            }
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+                background: var(--border);
+                border-radius: 2px;
+            }
+        </style>
+    </head>
+    <body>
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>🍽 API Restau</h1>
+                <p>Testeur de routes Laravel</p>
+            </div>
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="logo">
-    <h1>🍽 API Bénin</h1>
-    <p>Testeur de routes Laravel</p>
-  </div>
+            <div class="token-box">
+                <label>Token actif</label>
+                <div class="token-display empty" id="tokenDisplay">
+                    Pas encore connecté
+                </div>
+            </div>
 
-  <div class="token-box">
-    <label>Token actif</label>
-    <div class="token-display empty" id="tokenDisplay">Pas encore connecté</div>
-  </div>
+            <div class="nav-section"><span>Auth</span></div>
+            <button class="nav-btn active" onclick="loadRoute('register')">
+                <span class="method post">POST</span> Inscription
+            </button>
+            <button class="nav-btn" onclick="loadRoute('login')">
+                <span class="method post">POST</span> Connexion
+            </button>
+            <button class="nav-btn" onclick="loadRoute('me')">
+                <span class="method get">GET</span> Mon profil
+            </button>
+            <button class="nav-btn" onclick="loadRoute('logout')">
+                <span class="method post">POST</span> Déconnexion
+            </button>
 
-  <div class="nav-section"><span>Auth</span></div>
-  <button class="nav-btn active" onclick="loadRoute('register')">
-    <span class="method post">POST</span> Inscription
-  </button>
-  <button class="nav-btn" onclick="loadRoute('login')">
-    <span class="method post">POST</span> Connexion
-  </button>
-  <button class="nav-btn" onclick="loadRoute('me')">
-    <span class="method get">GET</span> Mon profil
-  </button>
-  <button class="nav-btn" onclick="loadRoute('logout')">
-    <span class="method post">POST</span> Déconnexion
-  </button>
+            <div class="nav-section"><span>Restaurants</span></div>
+            <button class="nav-btn" onclick="loadRoute('restaurants_list')">
+                <span class="method get">GET</span> Liste
+            </button>
+            <button class="nav-btn" onclick="loadRoute('restaurants_create')">
+                <span class="method post">POST</span> Créer
+            </button>
+            <button class="nav-btn" onclick="loadRoute('restaurants_show')">
+                <span class="method get">GET</span> Voir un
+            </button>
+            <button class="nav-btn" onclick="loadRoute('restaurants_update')">
+                <span class="method put">PUT</span> Modifier
+            </button>
 
-  <div class="nav-section"><span>Restaurants</span></div>
-  <button class="nav-btn" onclick="loadRoute('restaurants_list')">
-    <span class="method get">GET</span> Liste
-  </button>
-  <button class="nav-btn" onclick="loadRoute('restaurants_create')">
-    <span class="method post">POST</span> Créer
-  </button>
-  <button class="nav-btn" onclick="loadRoute('restaurants_show')">
-    <span class="method get">GET</span> Voir un
-  </button>
-  <button class="nav-btn" onclick="loadRoute('restaurants_update')">
-    <span class="method put">PUT</span> Modifier
-  </button>
+            <div class="nav-section"><span>Tables</span></div>
+            <button class="nav-btn" onclick="loadRoute('tables_list')">
+                <span class="method get">GET</span> Tables du resto
+            </button>
+            <button class="nav-btn" onclick="loadRoute('tables_dispo')">
+                <span class="method get">GET</span> Disponibles
+            </button>
+            <button class="nav-btn" onclick="loadRoute('tables_create')">
+                <span class="method post">POST</span> Ajouter table
+            </button>
 
-  <div class="nav-section"><span>Tables</span></div>
-  <button class="nav-btn" onclick="loadRoute('tables_list')">
-    <span class="method get">GET</span> Tables du resto
-  </button>
-  <button class="nav-btn" onclick="loadRoute('tables_dispo')">
-    <span class="method get">GET</span> Disponibles
-  </button>
-  <button class="nav-btn" onclick="loadRoute('tables_create')">
-    <span class="method post">POST</span> Ajouter table
-  </button>
-
-  <div class="nav-section"><span>Réservations</span></div>
-  <button class="nav-btn" onclick="loadRoute('reservations_list')">
-    <span class="method get">GET</span> Liste
-  </button>
-  <button class="nav-btn" onclick="loadRoute('reservations_create')">
-    <span class="method post">POST</span> Créer
-  </button>
-  <button class="nav-btn" onclick="loadRoute('reservations_update')">
-    <span class="method put">PUT</span> Modifier
-  </button>
-  <button class="nav-btn" onclick="loadRoute('reservations_cancel')">
-    <span class="method del">DEL</span> Annuler
-  </button>
-  <button class="nav-btn" onclick="loadRoute('mes_reservations')">
-    <span class="method get">GET</span> Mes réservations
-  </button>
-</div>
-
-<!-- MAIN -->
-<div class="main">
-  <div class="topbar">
-    <span class="method-badge post" id="topMethod">POST</span>
-    <div class="url-display">
-      <span id="topUrl">http://127.0.0.1:8000/api/register</span>
-    </div>
-  </div>
-
-  <div class="content">
-    <!-- REQUÊTE -->
-    <div class="panel">
-      <h3>⚡ Requête</h3>
-      <div id="requestForm"></div>
-    </div>
-
-    <!-- RÉPONSE -->
-    <div class="response-area">
-      <h3 style="font-size:11px;text-transform:uppercase;letter-spacing:0.12em;color:var(--accent);margin-bottom:16px;font-family:var(--mono)">📡 Réponse</h3>
-      <div class="response-header">
-        <span class="status-badge status-idle" id="statusBadge">—</span>
-        <span class="response-time" id="responseTime"></span>
-      </div>
-      <div class="json-output" id="jsonOutput">
-        <div class="empty-state">
-          <div class="icon">🛰</div>
-          <p>Lance une requête<br>pour voir la réponse ici</p>
+            <div class="nav-section"><span>Réservations</span></div>
+            <button class="nav-btn" onclick="loadRoute('reservations_list')">
+                <span class="method get">GET</span> Liste
+            </button>
+            <button class="nav-btn" onclick="loadRoute('reservations_create')">
+                <span class="method post">POST</span> Créer
+            </button>
+            <button class="nav-btn" onclick="loadRoute('reservations_update')">
+                <span class="method put">PUT</span> Modifier
+            </button>
+            <button class="nav-btn" onclick="loadRoute('reservations_cancel')">
+                <span class="method del">DEL</span> Annuler
+            </button>
+            <button class="nav-btn" onclick="loadRoute('mes_reservations')">
+                <span class="method get">GET</span> Mes réservations
+            </button>
         </div>
-      </div>
-    </div>
-  </div>
-</div>
 
-<script>
-// ============================================================
-// CONFIGURATION DE TOUTES LES ROUTES
-// ============================================================
-const BASE = 'http://127.0.0.1:8000/api';
-let token = '';
+        <!-- MAIN -->
+        <div class="main">
+            <div class="topbar">
+                <span class="method-badge post" id="topMethod">POST</span>
+                <div class="url-display">
+                    <span id="topUrl">http://127.0.0.1:8000/api/register</span>
+                </div>
+            </div>
 
-const ROUTES = {
-  register: {
-    method: 'POST', url: '/register', auth: false,
-    fields: [
-      { key: 'name',                  label: 'Nom complet',            type: 'text',     default: 'Kofi Mensah' },
-      { key: 'email',                 label: 'Email',                   type: 'text',     default: 'kofi@example.com' },
-      { key: 'password',              label: 'Mot de passe',            type: 'text',     default: 'password123' },
-      { key: 'password_confirmation', label: 'Confirmer mot de passe',  type: 'text',     default: 'password123' },
-    ]
-  },
-  login: {
-    method: 'POST', url: '/login', auth: false,
-    info: 'Utilise les comptes de test du seeder',
-    fields: [
-      { key: 'email',    label: 'Email',        type: 'text', default: 'admin@resto-benin.com' },
-      { key: 'password', label: 'Mot de passe', type: 'text', default: 'password123' },
-    ]
-  },
-  me: {
-    method: 'GET', url: '/me', auth: true, fields: []
-  },
-  logout: {
-    method: 'POST', url: '/logout', auth: true, fields: []
-  },
-  restaurants_list: {
-    method: 'GET', url: '/restaurants', auth: true,
-    params: [
-      { key: 'search',   label: 'Recherche (nom/adresse)', default: '' },
-      { key: 'actif',    label: 'Actif seulement (true/false)', default: '' },
-      { key: 'par_page', label: 'Résultats par page', default: '15' },
-    ]
-  },
-  restaurants_create: {
-    method: 'POST', url: '/restaurants', auth: true,
-    info: '⚠️ Admin seulement',
-    fields: [
-      { key: 'nom',         label: 'Nom du restaurant',  type: 'text',     default: 'Le Maquis du Port' },
-      { key: 'description', label: 'Description',         type: 'textarea', default: 'Spécialités de poissons et fruits de mer à Cotonou.' },
-      { key: 'adresse',     label: 'Adresse',             type: 'text',     default: 'Boulevard de la Marina, Cotonou' },
-      { key: 'telephone',   label: 'Téléphone',           type: 'text',     default: '+229 97 00 11 22' },
-      { key: 'email',       label: 'Email',               type: 'text',     default: 'maquis@port.bj' },
-      { key: 'horaires',    label: 'Horaires',            type: 'text',     default: 'Lun-Dim : 10h-23h' },
-    ]
-  },
-  restaurants_show: {
-    method: 'GET', url: '/restaurants/{id}', auth: true,
-    urlParams: [{ key: 'id', label: 'ID du restaurant', default: '1' }],
-    fields: []
-  },
-  restaurants_update: {
-    method: 'PUT', url: '/restaurants/{id}', auth: true,
-    info: '⚠️ Admin seulement',
-    urlParams: [{ key: 'id', label: 'ID du restaurant', default: '1' }],
-    fields: [
-      { key: 'nom',      label: 'Nouveau nom',      type: 'text', default: 'La Terrasse de Cotonou V2' },
-      { key: 'horaires', label: 'Nouveaux horaires', type: 'text', default: 'Lun-Dim : 11h-23h' },
-    ]
-  },
-  tables_list: {
-    method: 'GET', url: '/restaurants/{restaurant_id}/tables', auth: true,
-    urlParams: [{ key: 'restaurant_id', label: 'ID du restaurant', default: '1' }],
-    params: [
-      { key: 'personnes',   label: 'Capacité min', default: '' },
-      { key: 'emplacement', label: 'Emplacement',  default: '' },
-    ]
-  },
-  tables_dispo: {
-    method: 'GET', url: '/restaurants/{restaurant_id}/tables-disponibles', auth: true,
-    urlParams: [{ key: 'restaurant_id', label: 'ID du restaurant', default: '1' }],
-    params: [
-      { key: 'date',      label: 'Date (YYYY-MM-DD)', default: new Date(Date.now()+86400000).toISOString().split('T')[0] },
-      { key: 'heure',     label: 'Heure (HH:MM)',     default: '19:30' },
-      { key: 'personnes', label: 'Nombre de personnes', default: '2' },
-    ]
-  },
-  tables_create: {
-    method: 'POST', url: '/restaurants/{restaurant_id}/tables', auth: true,
-    info: '⚠️ Admin seulement',
-    urlParams: [{ key: 'restaurant_id', label: 'ID du restaurant', default: '1' }],
-    fields: [
-      { key: 'numero',      label: 'Numéro/nom de la table', type: 'text', default: 'Table 10' },
-      { key: 'capacite',    label: 'Capacité (personnes)',    type: 'text', default: '4' },
-      { key: 'emplacement', label: 'Emplacement',             type: 'text', default: 'Terrasse extérieure' },
-    ]
-  },
-  reservations_list: {
-    method: 'GET', url: '/reservations', auth: true,
-    params: [
-      { key: 'statut',       label: 'Statut (en_attente/confirmee/annulee)', default: '' },
-      { key: 'date',         label: 'Date (YYYY-MM-DD)', default: '' },
-      { key: 'restaurant_id',label: 'ID restaurant', default: '' },
-      { key: 'par_page',     label: 'Par page', default: '15' },
-    ]
-  },
-  reservations_create: {
-    method: 'POST', url: '/reservations', auth: true,
-    fields: [
-      { key: 'table_id',          label: 'ID de la table',     type: 'text',     default: '2' },
-      { key: 'date_reservation',  label: 'Date (YYYY-MM-DD)',  type: 'text',     default: new Date(Date.now()+86400000).toISOString().split('T')[0] },
-      { key: 'heure_reservation', label: 'Heure (HH:MM)',      type: 'text',     default: '20:00' },
-      { key: 'nombre_personnes',  label: 'Nombre de personnes',type: 'text',     default: '3' },
-      { key: 'notes',             label: 'Notes (optionnel)',   type: 'textarea', default: 'Menu végétarien svp.' },
-    ]
-  },
-  reservations_update: {
-    method: 'PUT', url: '/reservations/{id}', auth: true,
-    urlParams: [{ key: 'id', label: 'ID de la réservation', default: '1' }],
-    fields: [
-      { key: 'statut', label: 'Nouveau statut', type: 'select', options: ['en_attente','confirmee','annulee','terminee'], default: 'confirmee' },
-      { key: 'notes',  label: 'Notes',          type: 'textarea', default: '' },
-    ]
-  },
-  reservations_cancel: {
-    method: 'DELETE', url: '/reservations/{id}', auth: true,
-    urlParams: [{ key: 'id', label: 'ID de la réservation à annuler', default: '1' }],
-    fields: []
-  },
-  mes_reservations: {
-    method: 'GET', url: '/mes-reservations', auth: true,
-    params: [{ key: 'par_page', label: 'Par page', default: '10' }]
-  },
-};
+            <div class="content">
+                <!-- REQUÊTE -->
+                <div class="panel">
+                    <h3>⚡ Requête</h3>
+                    <div id="requestForm"></div>
+                </div>
 
-// ============================================================
-// FONCTIONS UTILITAIRES
-// ============================================================
+                <!-- RÉPONSE -->
+                <div class="response-area">
+                    <h3
+                        style="
+                            font-size: 11px;
+                            text-transform: uppercase;
+                            letter-spacing: 0.12em;
+                            color: var(--accent);
+                            margin-bottom: 16px;
+                            font-family: var(--mono);
+                        "
+                    >
+                        📡 Réponse
+                    </h3>
+                    <div class="response-header">
+                        <span class="status-badge status-idle" id="statusBadge"
+                            >—</span
+                        >
+                        <span class="response-time" id="responseTime"></span>
+                    </div>
+                    <div class="json-output" id="jsonOutput">
+                        <div class="empty-state">
+                            <div class="icon">🛰</div>
+                            <p>
+                                Lance une requête<br />pour voir la réponse ici
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-function methodColor(m) {
-  return { GET:'get', POST:'post', PUT:'put', DELETE:'del' }[m] || 'get';
-}
+        <script>
+            // ============================================================
+            // CONFIGURATION DE TOUTES LES ROUTES
+            // ============================================================
+            const BASE = "http://127.0.0.1:8000/api";
+            let token = "";
 
-function highlightJson(obj) {
-  const str = JSON.stringify(obj, null, 2);
-  return str.replace(
-    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
-    match => {
-      if (/^"/.test(match)) {
-        if (/:$/.test(match)) return `<span class="json-key">${match}</span>`;
-        return `<span class="json-string">${match}</span>`;
-      }
-      if (/true|false/.test(match)) return `<span class="json-bool">${match}</span>`;
-      if (/null/.test(match)) return `<span class="json-null">${match}</span>`;
-      return `<span class="json-number">${match}</span>`;
-    }
-  );
-}
+            const ROUTES = {
+                register: {
+                    method: "POST",
+                    url: "/register",
+                    auth: false,
+                    fields: [
+                        {
+                            key: "name",
+                            label: "Nom complet",
+                            type: "text",
+                            default: "Kofi Mensah",
+                        },
+                        {
+                            key: "email",
+                            label: "Email",
+                            type: "text",
+                            default: "kofi@example.com",
+                        },
+                        {
+                            key: "password",
+                            label: "Mot de passe",
+                            type: "text",
+                            default: "password123",
+                        },
+                        {
+                            key: "password_confirmation",
+                            label: "Confirmer mot de passe",
+                            type: "text",
+                            default: "password123",
+                        },
+                    ],
+                },
+                login: {
+                    method: "POST",
+                    url: "/login",
+                    auth: false,
+                    info: "Utilise les comptes de test du seeder",
+                    fields: [
+                        {
+                            key: "email",
+                            label: "Email",
+                            type: "text",
+                            default: "admin@resto-benin.com",
+                        },
+                        {
+                            key: "password",
+                            label: "Mot de passe",
+                            type: "text",
+                            default: "password123",
+                        },
+                    ],
+                },
+                me: {
+                    method: "GET",
+                    url: "/me",
+                    auth: true,
+                    fields: [],
+                },
+                logout: {
+                    method: "POST",
+                    url: "/logout",
+                    auth: true,
+                    fields: [],
+                },
+                restaurants_list: {
+                    method: "GET",
+                    url: "/restaurants",
+                    auth: true,
+                    params: [
+                        {
+                            key: "search",
+                            label: "Recherche (nom/adresse)",
+                            default: "",
+                        },
+                        {
+                            key: "actif",
+                            label: "Actif seulement (true/false)",
+                            default: "",
+                        },
+                        {
+                            key: "par_page",
+                            label: "Résultats par page",
+                            default: "15",
+                        },
+                    ],
+                },
+                restaurants_create: {
+                    method: "POST",
+                    url: "/restaurants",
+                    auth: true,
+                    info: "⚠️ Admin seulement",
+                    fields: [
+                        {
+                            key: "nom",
+                            label: "Nom du restaurant",
+                            type: "text",
+                            default: "Le Maquis du Port",
+                        },
+                        {
+                            key: "description",
+                            label: "Description",
+                            type: "textarea",
+                            default:
+                                "Spécialités de poissons et fruits de mer à Cotonou.",
+                        },
+                        {
+                            key: "adresse",
+                            label: "Adresse",
+                            type: "text",
+                            default: "Boulevard de la Marina, Cotonou",
+                        },
+                        {
+                            key: "telephone",
+                            label: "Téléphone",
+                            type: "text",
+                            default: "+229 97 00 11 22",
+                        },
+                        {
+                            key: "email",
+                            label: "Email",
+                            type: "text",
+                            default: "maquis@port.bj",
+                        },
+                        {
+                            key: "horaires",
+                            label: "Horaires",
+                            type: "text",
+                            default: "Lun-Dim : 10h-23h",
+                        },
+                    ],
+                },
+                restaurants_show: {
+                    method: "GET",
+                    url: "/restaurants/{id}",
+                    auth: true,
+                    urlParams: [
+                        { key: "id", label: "ID du restaurant", default: "1" },
+                    ],
+                    fields: [],
+                },
+                restaurants_update: {
+                    method: "PUT",
+                    url: "/restaurants/{id}",
+                    auth: true,
+                    info: "⚠️ Admin seulement",
+                    urlParams: [
+                        { key: "id", label: "ID du restaurant", default: "1" },
+                    ],
+                    fields: [
+                        {
+                            key: "nom",
+                            label: "Nouveau nom",
+                            type: "text",
+                            default: "La Terrasse de Cotonou V2",
+                        },
+                        {
+                            key: "horaires",
+                            label: "Nouveaux horaires",
+                            type: "text",
+                            default: "Lun-Dim : 11h-23h",
+                        },
+                    ],
+                },
+                tables_list: {
+                    method: "GET",
+                    url: "/restaurants/{restaurant_id}/tables",
+                    auth: true,
+                    urlParams: [
+                        {
+                            key: "restaurant_id",
+                            label: "ID du restaurant",
+                            default: "1",
+                        },
+                    ],
+                    params: [
+                        {
+                            key: "personnes",
+                            label: "Capacité min",
+                            default: "",
+                        },
+                        {
+                            key: "emplacement",
+                            label: "Emplacement",
+                            default: "",
+                        },
+                    ],
+                },
+                tables_dispo: {
+                    method: "GET",
+                    url: "/restaurants/{restaurant_id}/tables-disponibles",
+                    auth: true,
+                    urlParams: [
+                        {
+                            key: "restaurant_id",
+                            label: "ID du restaurant",
+                            default: "1",
+                        },
+                    ],
+                    params: [
+                        {
+                            key: "date",
+                            label: "Date (YYYY-MM-DD)",
+                            default: new Date(Date.now() + 86400000)
+                                .toISOString()
+                                .split("T")[0],
+                        },
+                        {
+                            key: "heure",
+                            label: "Heure (HH:MM)",
+                            default: "19:30",
+                        },
+                        {
+                            key: "personnes",
+                            label: "Nombre de personnes",
+                            default: "2",
+                        },
+                    ],
+                },
+                tables_create: {
+                    method: "POST",
+                    url: "/restaurants/{restaurant_id}/tables",
+                    auth: true,
+                    info: "⚠️ Admin seulement",
+                    urlParams: [
+                        {
+                            key: "restaurant_id",
+                            label: "ID du restaurant",
+                            default: "1",
+                        },
+                    ],
+                    fields: [
+                        {
+                            key: "numero",
+                            label: "Numéro/nom de la table",
+                            type: "text",
+                            default: "Table 10",
+                        },
+                        {
+                            key: "capacite",
+                            label: "Capacité (personnes)",
+                            type: "text",
+                            default: "4",
+                        },
+                        {
+                            key: "emplacement",
+                            label: "Emplacement",
+                            type: "text",
+                            default: "Terrasse extérieure",
+                        },
+                    ],
+                },
+                reservations_list: {
+                    method: "GET",
+                    url: "/reservations",
+                    auth: true,
+                    params: [
+                        {
+                            key: "statut",
+                            label: "Statut (en_attente/confirmee/annulee)",
+                            default: "",
+                        },
+                        {
+                            key: "date",
+                            label: "Date (YYYY-MM-DD)",
+                            default: "",
+                        },
+                        {
+                            key: "restaurant_id",
+                            label: "ID restaurant",
+                            default: "",
+                        },
+                        { key: "par_page", label: "Par page", default: "15" },
+                    ],
+                },
+                reservations_create: {
+                    method: "POST",
+                    url: "/reservations",
+                    auth: true,
+                    fields: [
+                        {
+                            key: "table_id",
+                            label: "ID de la table",
+                            type: "text",
+                            default: "2",
+                        },
+                        {
+                            key: "date_reservation",
+                            label: "Date (YYYY-MM-DD)",
+                            type: "text",
+                            default: new Date(Date.now() + 86400000)
+                                .toISOString()
+                                .split("T")[0],
+                        },
+                        {
+                            key: "heure_reservation",
+                            label: "Heure (HH:MM)",
+                            type: "text",
+                            default: "20:00",
+                        },
+                        {
+                            key: "nombre_personnes",
+                            label: "Nombre de personnes",
+                            type: "text",
+                            default: "3",
+                        },
+                        {
+                            key: "notes",
+                            label: "Notes (optionnel)",
+                            type: "textarea",
+                            default: "Menu végétarien svp.",
+                        },
+                    ],
+                },
+                reservations_update: {
+                    method: "PUT",
+                    url: "/reservations/{id}",
+                    auth: true,
+                    urlParams: [
+                        {
+                            key: "id",
+                            label: "ID de la réservation",
+                            default: "1",
+                        },
+                    ],
+                    fields: [
+                        {
+                            key: "statut",
+                            label: "Nouveau statut",
+                            type: "select",
+                            options: [
+                                "en_attente",
+                                "confirmee",
+                                "annulee",
+                                "terminee",
+                            ],
+                            default: "confirmee",
+                        },
+                        {
+                            key: "notes",
+                            label: "Notes",
+                            type: "textarea",
+                            default: "",
+                        },
+                    ],
+                },
+                reservations_cancel: {
+                    method: "DELETE",
+                    url: "/reservations/{id}",
+                    auth: true,
+                    urlParams: [
+                        {
+                            key: "id",
+                            label: "ID de la réservation à annuler",
+                            default: "1",
+                        },
+                    ],
+                    fields: [],
+                },
+                mes_reservations: {
+                    method: "GET",
+                    url: "/mes-reservations",
+                    auth: true,
+                    params: [
+                        { key: "par_page", label: "Par page", default: "10" },
+                    ],
+                },
+            };
 
-// ============================================================
-// CHARGER UNE ROUTE DANS LE FORMULAIRE
-// ============================================================
-let currentRoute = 'register';
+            // ============================================================
+            // FONCTIONS UTILITAIRES
+            // ============================================================
 
-function loadRoute(routeKey) {
-  currentRoute = routeKey;
-  const r = ROUTES[routeKey];
+            function methodColor(m) {
+                return (
+                    { GET: "get", POST: "post", PUT: "put", DELETE: "del" }[
+                        m
+                    ] || "get"
+                );
+            }
 
-  // Mettre à jour les boutons nav
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-  event.currentTarget.classList.add('active');
+            function highlightJson(obj) {
+                const str = JSON.stringify(obj, null, 2);
+                return str.replace(
+                    /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,
+                    (match) => {
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match))
+                                return `<span class="json-key">${match}</span>`;
+                            return `<span class="json-string">${match}</span>`;
+                        }
+                        if (/true|false/.test(match))
+                            return `<span class="json-bool">${match}</span>`;
+                        if (/null/.test(match))
+                            return `<span class="json-null">${match}</span>`;
+                        return `<span class="json-number">${match}</span>`;
+                    },
+                );
+            }
 
-  // Mettre à jour la topbar
-  const topMethod = document.getElementById('topMethod');
-  topMethod.textContent = r.method;
-  topMethod.className = 'method-badge ' + methodColor(r.method);
-  document.getElementById('topUrl').textContent = BASE + r.url;
+            // ============================================================
+            // CHARGER UNE ROUTE DANS LE FORMULAIRE
+            // ============================================================
+            let currentRoute = "register";
 
-  // Construire le formulaire
-  let html = '';
+            function loadRoute(routeKey) {
+                currentRoute = routeKey;
+                const r = ROUTES[routeKey];
 
-  if (r.auth) {
-    html += `<div class="info-box">🔐 Requête authentifiée — token ajouté automatiquement</div>`;
-  }
-  if (r.info) {
-    html += `<div class="info-box" style="background:#2a1a10;border-color:#4a2a10;color:#e8a838">${r.info}</div>`;
-  }
+                // Mettre à jour les boutons nav
+                document
+                    .querySelectorAll(".nav-btn")
+                    .forEach((b) => b.classList.remove("active"));
+                event.currentTarget.classList.add("active");
 
-  // Paramètres d'URL (ex: {id})
-  if (r.urlParams) {
-    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Paramètres URL</p>`;
-    r.urlParams.forEach(p => {
-      html += `<div class="field-group">
+                // Mettre à jour la topbar
+                const topMethod = document.getElementById("topMethod");
+                topMethod.textContent = r.method;
+                topMethod.className = "method-badge " + methodColor(r.method);
+                document.getElementById("topUrl").textContent = BASE + r.url;
+
+                // Construire le formulaire
+                let html = "";
+
+                if (r.auth) {
+                    html += `<div class="info-box">🔐 Requête authentifiée — token ajouté automatiquement</div>`;
+                }
+                if (r.info) {
+                    html += `<div class="info-box" style="background:#2a1a10;border-color:#4a2a10;color:#e8a838">${r.info}</div>`;
+                }
+
+                // Paramètres d'URL (ex: {id})
+                if (r.urlParams) {
+                    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Paramètres URL</p>`;
+                    r.urlParams.forEach((p) => {
+                        html += `<div class="field-group">
         <label>${p.label}</label>
         <input type="text" id="urlparam_${p.key}" value="${p.default}" placeholder="${p.default}">
       </div>`;
-    });
-    html += `</div>`;
-  }
+                    });
+                    html += `</div>`;
+                }
 
-  // Query params (GET)
-  if (r.params) {
-    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Paramètres de recherche (optionnels)</p>`;
-    r.params.forEach(p => {
-      html += `<div class="field-group">
+                // Query params (GET)
+                if (r.params) {
+                    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Paramètres de recherche (optionnels)</p>`;
+                    r.params.forEach((p) => {
+                        html += `<div class="field-group">
         <label>${p.label}</label>
         <input type="text" id="param_${p.key}" value="${p.default}" placeholder="laisser vide = ignorer">
       </div>`;
-    });
-    html += `</div>`;
-  }
+                    });
+                    html += `</div>`;
+                }
 
-  // Body fields
-  if (r.fields && r.fields.length > 0) {
-    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Corps de la requête (JSON)</p>`;
-    r.fields.forEach(f => {
-      if (f.type === 'textarea') {
-        html += `<div class="field-group">
+                // Body fields
+                if (r.fields && r.fields.length > 0) {
+                    html += `<div style="margin-bottom:16px"><p style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.1em">Corps de la requête (JSON)</p>`;
+                    r.fields.forEach((f) => {
+                        if (f.type === "textarea") {
+                            html += `<div class="field-group">
           <label>${f.label}</label>
           <textarea id="field_${f.key}">${f.default}</textarea>
         </div>`;
-      } else if (f.type === 'select') {
-        const opts = f.options.map(o => `<option value="${o}" ${o===f.default?'selected':''}>${o}</option>`).join('');
-        html += `<div class="field-group">
+                        } else if (f.type === "select") {
+                            const opts = f.options
+                                .map(
+                                    (o) =>
+                                        `<option value="${o}" ${o === f.default ? "selected" : ""}>${o}</option>`,
+                                )
+                                .join("");
+                            html += `<div class="field-group">
           <label>${f.label}</label>
           <select id="field_${f.key}">${opts}</select>
         </div>`;
-      } else {
-        html += `<div class="field-group">
+                        } else {
+                            html += `<div class="field-group">
           <label>${f.label}</label>
           <input type="text" id="field_${f.key}" value="${f.default}" placeholder="${f.default}">
         </div>`;
-      }
-    });
-    html += `</div>`;
-  }
+                        }
+                    });
+                    html += `</div>`;
+                }
 
-  html += `<button class="send-btn" onclick="sendRequest()" id="sendBtn">Envoyer la requête →</button>`;
-  document.getElementById('requestForm').innerHTML = html;
-}
+                html += `<button class="send-btn" onclick="sendRequest()" id="sendBtn">Envoyer la requête →</button>`;
+                document.getElementById("requestForm").innerHTML = html;
+            }
 
-// ============================================================
-// ENVOYER LA REQUÊTE
-// ============================================================
-async function sendRequest() {
-  const r = ROUTES[currentRoute];
-  const btn = document.getElementById('sendBtn');
-  btn.disabled = true;
+            // ============================================================
+            // ENVOYER LA REQUÊTE
+            // ============================================================
+            async function sendRequest() {
+                const r = ROUTES[currentRoute];
+                const btn = document.getElementById("sendBtn");
+                btn.disabled = true;
 
-  // Afficher loader
-  document.getElementById('jsonOutput').innerHTML = `
+                // Afficher loader
+                document.getElementById("jsonOutput").innerHTML = `
     <div style="padding:40px;text-align:center">
       <div class="loading-dots"><span></span><span></span><span></span></div>
       <p style="margin-top:16px;color:var(--muted);font-size:12px">Envoi en cours...</p>
     </div>`;
-  document.getElementById('statusBadge').className = 'status-badge status-idle';
-  document.getElementById('statusBadge').textContent = '...';
-  document.getElementById('responseTime').textContent = '';
+                document.getElementById("statusBadge").className =
+                    "status-badge status-idle";
+                document.getElementById("statusBadge").textContent = "...";
+                document.getElementById("responseTime").textContent = "";
 
-  // Construire l'URL avec les paramètres d'URL
-  let url = BASE + r.url;
-  if (r.urlParams) {
-    r.urlParams.forEach(p => {
-      const val = document.getElementById('urlparam_'+p.key)?.value;
-      if (val) url = url.replace('{'+p.key+'}', val);
-    });
-  }
+                // Construire l'URL avec les paramètres d'URL
+                let url = BASE + r.url;
+                if (r.urlParams) {
+                    r.urlParams.forEach((p) => {
+                        const val = document.getElementById(
+                            "urlparam_" + p.key,
+                        )?.value;
+                        if (val) url = url.replace("{" + p.key + "}", val);
+                    });
+                }
 
-  // Ajouter les query params
-  if (r.params) {
-    const qp = new URLSearchParams();
-    r.params.forEach(p => {
-      const val = document.getElementById('param_'+p.key)?.value;
-      if (val) qp.append(p.key, val);
-    });
-    if (qp.toString()) url += '?' + qp.toString();
-  }
+                // Ajouter les query params
+                if (r.params) {
+                    const qp = new URLSearchParams();
+                    r.params.forEach((p) => {
+                        const val = document.getElementById(
+                            "param_" + p.key,
+                        )?.value;
+                        if (val) qp.append(p.key, val);
+                    });
+                    if (qp.toString()) url += "?" + qp.toString();
+                }
 
-  // Construire les headers
-  const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
-  if (r.auth && token) headers['Authorization'] = 'Bearer ' + token;
+                // Construire les headers
+                const headers = {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                };
+                if (r.auth && token)
+                    headers["Authorization"] = "Bearer " + token;
 
-  // Construire le body
-  let body = undefined;
-  if (r.fields && r.fields.length > 0 && r.method !== 'GET') {
-    const data = {};
-    r.fields.forEach(f => {
-      const val = document.getElementById('field_'+f.key)?.value;
-      if (val !== undefined && val !== '') data[f.key] = val;
-    });
-    body = JSON.stringify(data);
-  }
+                // Construire le body
+                let body = undefined;
+                if (r.fields && r.fields.length > 0 && r.method !== "GET") {
+                    const data = {};
+                    r.fields.forEach((f) => {
+                        const val = document.getElementById(
+                            "field_" + f.key,
+                        )?.value;
+                        if (val !== undefined && val !== "") data[f.key] = val;
+                    });
+                    body = JSON.stringify(data);
+                }
 
-  // Envoyer
-  const start = Date.now();
-  try {
-    const res = await fetch(url, { method: r.method, headers, body });
-    const elapsed = Date.now() - start;
-    let data;
-    try { data = await res.json(); } catch(e) { data = { raw: await res.text() }; }
+                // Envoyer
+                const start = Date.now();
+                try {
+                    const res = await fetch(url, {
+                        method: r.method,
+                        headers,
+                        body,
+                    });
+                    const elapsed = Date.now() - start;
+                    let data;
+                    try {
+                        data = await res.json();
+                    } catch (e) {
+                        data = { raw: await res.text() };
+                    }
 
-    // Statut
-    const badge = document.getElementById('statusBadge');
-    badge.textContent = res.status + ' ' + res.statusText;
-    badge.className = 'status-badge ' + (res.ok ? 'status-ok' : 'status-err');
-    document.getElementById('responseTime').textContent = elapsed + 'ms';
+                    // Statut
+                    const badge = document.getElementById("statusBadge");
+                    badge.textContent = res.status + " " + res.statusText;
+                    badge.className =
+                        "status-badge " + (res.ok ? "status-ok" : "status-err");
+                    document.getElementById("responseTime").textContent =
+                        elapsed + "ms";
 
-    // Sauvegarder le token si présent
-    if (data.access_token) {
-      token = data.access_token;
-      const td = document.getElementById('tokenDisplay');
-      td.className = 'token-display';
-      td.textContent = token.substring(0, 60) + '...';
-    }
+                    // Sauvegarder le token si présent
+                    if (data.access_token) {
+                        token = data.access_token;
+                        const td = document.getElementById("tokenDisplay");
+                        td.className = "token-display";
+                        td.textContent = token.substring(0, 60) + "...";
+                    }
 
-    // Afficher la réponse
-    document.getElementById('jsonOutput').innerHTML = highlightJson(data);
+                    // Afficher la réponse
+                    document.getElementById("jsonOutput").innerHTML =
+                        highlightJson(data);
 
-    // Mettre à jour l'URL affichée
-    document.getElementById('topUrl').textContent = url;
+                    // Mettre à jour l'URL affichée
+                    document.getElementById("topUrl").textContent = url;
+                } catch (e) {
+                    document.getElementById("statusBadge").className =
+                        "status-badge status-err";
+                    document.getElementById("statusBadge").textContent =
+                        "ERREUR RÉSEAU";
+                    document.getElementById("jsonOutput").innerHTML =
+                        `<span style="color:var(--red)">❌ Impossible de contacter le serveur.\n\nVérifie que "php artisan serve" est lancé\net que l'URL est correcte :\n${url}</span>`;
+                }
 
-  } catch(e) {
-    document.getElementById('statusBadge').className = 'status-badge status-err';
-    document.getElementById('statusBadge').textContent = 'ERREUR RÉSEAU';
-    document.getElementById('jsonOutput').innerHTML = `<span style="color:var(--red)">❌ Impossible de contacter le serveur.\n\nVérifie que "php artisan serve" est lancé\net que l'URL est correcte :\n${url}</span>`;
-  }
+                btn.disabled = false;
+            }
 
-  btn.disabled = false;
-}
-
-// Charger la première route au démarrage
-loadRoute('register');
-</script>
-</body>
+            // Charger la première route au démarrage
+            loadRoute("register");
+        </script>
+    </body>
 </html>
