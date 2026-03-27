@@ -1,0 +1,1106 @@
+openapi: 3.0.3
+info:
+  title: API Réservation de Restaurants — Bénin
+  description: |
+    API REST complète pour la gestion des réservations de tables dans des restaurants béninois.
+
+    ## Comment utiliser cette API
+
+    ### Étape 1 — Se connecter
+    Utilisez `POST /api/login` avec les identifiants ci-dessous pour obtenir un token.
+
+    ### Étape 2 — Utiliser le token
+    Copiez le `access_token` reçu et ajoutez-le dans chaque requête :
+    ```
+    Authorization: Bearer VOTRE_TOKEN_ICI
+    ```
+
+    ### Comptes de test disponibles
+    | Rôle  | Email | Mot de passe |
+    |-------|-------|--------------|
+    | Admin | admin@resto-benin.com | password123 |
+    | Client | ebenezer@example.com | password123 |
+    | Client | aicha@example.com | password123 |
+
+    ## Rôles
+    - **client** — peut consulter les restaurants, créer et gérer ses propres réservations
+    - **admin** — peut tout faire + créer/modifier/supprimer des restaurants et des tables
+
+    ## Codes de réponse courants
+    | Code | Signification |
+    |------|--------------|
+    | 200  | Succès |
+    | 201  | Créé avec succès |
+    | 401  | Non authentifié (token manquant ou invalide) |
+    | 403  | Accès interdit (pas les droits nécessaires) |
+    | 404  | Ressource introuvable |
+    | 422  | Données invalides (erreur de validation) |
+
+  version: 1.0.0
+  contact:
+    name: Resto
+    email: support@resto-benin.com
+
+servers:
+  - url: http://127.0.0.1:8000/api
+    description: Serveur de développement local (php artisan serve)
+
+tags:
+  - name: Authentification
+    description: Inscription, connexion, déconnexion et profil
+  - name: Restaurants
+    description: Création et gestion des restaurants
+  - name: Tables
+    description: Gestion des tables d'un restaurant et disponibilités
+  - name: Réservations
+    description: Création, modification et annulation des réservations
+
+# ================================================================
+# ENDPOINTS
+# ================================================================
+paths:
+  # ==============================
+  # AUTHENTIFICATION
+  # ==============================
+
+  /register:
+    post:
+      tags: [Authentification]
+      summary: Créer un nouveau compte
+      description: Crée un compte client. Le rôle est "client" par défaut.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, email, password, password_confirmation]
+              properties:
+                name:
+                  type: string
+                  example: Kofi Mensah
+                email:
+                  type: string
+                  format: email
+                  example: kofi@example.com
+                password:
+                  type: string
+                  minLength: 6
+                  example: "password123"
+                password_confirmation:
+                  type: string
+                  example: "password123"
+      responses:
+        "201":
+          description: Compte créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Compte créé avec succès !"
+                  utilisateur:
+                    $ref: "#/components/schemas/User"
+                  access_token:
+                    type: string
+                    example: "1|abc123xyz789..."
+                  token_type:
+                    type: string
+                    example: Bearer
+        "422":
+          description: Données invalides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErreurValidation"
+
+  /login:
+    post:
+      tags: [Authentification]
+      summary: Se connecter
+      description: Retourne un token Bearer à utiliser dans toutes les requêtes suivantes.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: admin@resto-benin.com
+                password:
+                  type: string
+                  example: password123
+      responses:
+        "200":
+          description: Connexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Connexion réussie !"
+                  utilisateur:
+                    $ref: "#/components/schemas/User"
+                  access_token:
+                    type: string
+                    example: "2|xyz456abc123..."
+                  token_type:
+                    type: string
+                    example: Bearer
+        "401":
+          description: Email ou mot de passe incorrect
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Email ou mot de passe incorrect."
+
+  /logout:
+    post:
+      tags: [Authentification]
+      summary: Se déconnecter
+      description: Supprime le token actuel. L'utilisateur devra se reconnecter.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Déconnexion réussie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Déconnexion réussie."
+        "401":
+          description: Non authentifié
+
+  /me:
+    get:
+      tags: [Authentification]
+      summary: Voir mon profil
+      description: Retourne les informations de l'utilisateur actuellement connecté.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Profil de l'utilisateur connecté
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  utilisateur:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Non authentifié
+
+  # ==============================
+  # RESTAURANTS
+  # ==============================
+
+  /restaurants:
+    get:
+      tags: [Restaurants]
+      summary: Liste tous les restaurants
+      description: Retourne une liste paginée des restaurants avec filtres optionnels.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Recherche par nom ou adresse
+          schema:
+            type: string
+          example: Cotonou
+        - name: actif
+          in: query
+          description: Filtrer seulement les restaurants actifs
+          schema:
+            type: boolean
+          example: true
+        - name: tri
+          in: query
+          description: Champ de tri
+          schema:
+            type: string
+            enum: [nom, created_at]
+            default: created_at
+        - name: ordre
+          in: query
+          description: Ordre du tri
+          schema:
+            type: string
+            enum: [asc, desc]
+            default: desc
+        - name: par_page
+          in: query
+          description: Nombre de résultats par page
+          schema:
+            type: integer
+            default: 15
+            minimum: 1
+            maximum: 100
+      responses:
+        "200":
+          description: Liste paginée des restaurants
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedRestaurants"
+        "401":
+          description: Non authentifié
+
+    post:
+      tags: [Restaurants]
+      summary: Créer un restaurant
+      description: Crée un nouveau restaurant. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestaurantInput"
+            example:
+              nom: "Le Maquis du Port"
+              description: "Spécialités de poissons et fruits de mer à Cotonou."
+              adresse: "Boulevard de la Marina, Cotonou"
+              telephone: "+229 97 00 11 22"
+              email: "maquis@port.bj"
+              horaires: "Lun-Dim : 10h-23h"
+      responses:
+        "201":
+          description: Restaurant créé avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Restaurant créé avec succès !"
+                  restaurant:
+                    $ref: "#/components/schemas/Restaurant"
+        "403":
+          description: Accès refusé — admin seulement
+        "422":
+          description: Données invalides
+
+  /restaurants/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant du restaurant
+        schema:
+          type: integer
+        example: 1
+
+    get:
+      tags: [Restaurants]
+      summary: Voir un restaurant
+      description: Retourne les détails d'un restaurant avec toutes ses tables.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Détails du restaurant avec ses tables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restaurant:
+                    $ref: "#/components/schemas/RestaurantAvecTables"
+        "404":
+          description: Restaurant introuvable
+
+    put:
+      tags: [Restaurants]
+      summary: Modifier un restaurant
+      description: Met à jour les informations d'un restaurant. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RestaurantInput"
+            example:
+              nom: "La Terrasse de Cotonou — Nouvelle version"
+              horaires: "Lun-Dim : 11h-23h"
+      responses:
+        "200":
+          description: Restaurant mis à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Restaurant mis à jour."
+                  restaurant:
+                    $ref: "#/components/schemas/Restaurant"
+        "403":
+          description: Accès refusé
+        "404":
+          description: Restaurant introuvable
+
+    delete:
+      tags: [Restaurants]
+      summary: Supprimer un restaurant
+      description: Supprime définitivement un restaurant et toutes ses tables. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Restaurant supprimé
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Restaurant supprimé avec succès."
+        "403":
+          description: Accès refusé
+        "404":
+          description: Restaurant introuvable
+
+  # ==============================
+  # TABLES
+  # ==============================
+
+  /restaurants/{restaurantId}/tables:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        description: Identifiant du restaurant
+        schema:
+          type: integer
+        example: 1
+
+    get:
+      tags: [Tables]
+      summary: Liste les tables d'un restaurant
+      description: Retourne toutes les tables d'un restaurant avec filtres optionnels.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: personnes
+          in: query
+          description: Capacité minimale souhaitée
+          schema:
+            type: integer
+            minimum: 1
+          example: 4
+        - name: emplacement
+          in: query
+          description: Filtrer par emplacement
+          schema:
+            type: string
+          example: "Terrasse extérieure"
+        - name: disponible
+          in: query
+          description: Filtrer par disponibilité
+          schema:
+            type: boolean
+          example: true
+        - name: par_page
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Liste paginée des tables
+        "404":
+          description: Restaurant introuvable
+
+    post:
+      tags: [Tables]
+      summary: Ajouter une table
+      description: Ajoute une nouvelle table au restaurant. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableInput"
+            example:
+              numero: "Table 10"
+              capacite: 4
+              emplacement: "Terrasse extérieure"
+      responses:
+        "201":
+          description: Table ajoutée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Table ajoutée avec succès !"
+                  table:
+                    $ref: "#/components/schemas/Table"
+        "403":
+          description: Accès refusé
+
+  /restaurants/{restaurantId}/tables/{tableId}:
+    parameters:
+      - name: restaurantId
+        in: path
+        required: true
+        schema:
+          type: integer
+        example: 1
+      - name: tableId
+        in: path
+        required: true
+        schema:
+          type: integer
+        example: 2
+
+    get:
+      tags: [Tables]
+      summary: Voir une table
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Détails de la table
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  table:
+                    $ref: "#/components/schemas/Table"
+        "404":
+          description: Table introuvable
+
+    put:
+      tags: [Tables]
+      summary: Modifier une table
+      description: Met à jour les informations d'une table. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TableInput"
+      responses:
+        "200":
+          description: Table mise à jour
+        "403":
+          description: Accès refusé
+        "404":
+          description: Table introuvable
+
+    delete:
+      tags: [Tables]
+      summary: Supprimer une table
+      description: Supprime une table. **Réservé aux administrateurs.**
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Table supprimée
+        "403":
+          description: Accès refusé
+
+  /restaurants/{restaurantId}/tables-disponibles:
+    get:
+      tags: [Tables]
+      summary: Tables disponibles
+      description: |
+        Retourne toutes les tables libres pour une date, une heure et un nombre de personnes donnés.
+        Très utile pour proposer des options au client avant qu'il réserve.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: restaurantId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+        - name: date
+          in: query
+          required: true
+          description: Date souhaitée (format YYYY-MM-DD, pas dans le passé)
+          schema:
+            type: string
+            format: date
+          example: "2025-07-14"
+        - name: heure
+          in: query
+          required: true
+          description: Heure souhaitée (format HH:MM)
+          schema:
+            type: string
+          example: "19:30"
+        - name: personnes
+          in: query
+          required: true
+          description: Nombre de personnes
+          schema:
+            type: integer
+            minimum: 1
+          example: 4
+      responses:
+        "200":
+          description: Liste des tables disponibles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  date:
+                    type: string
+                    example: "2025-07-14"
+                  heure:
+                    type: string
+                    example: "19:30"
+                  personnes:
+                    type: integer
+                    example: 4
+                  tables_disponibles:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Table"
+        "422":
+          description: Paramètres manquants ou invalides (date dans le passé, format incorrect...)
+
+  # ==============================
+  # RÉSERVATIONS
+  # ==============================
+
+  /reservations:
+    get:
+      tags: [Réservations]
+      summary: Liste les réservations
+      description: |
+        - **Client** : voit uniquement ses propres réservations
+        - **Admin** : voit toutes les réservations, peut filtrer par client
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: statut
+          in: query
+          description: Filtrer par statut
+          schema:
+            type: string
+            enum: [en_attente, confirmee, annulee, terminee]
+          example: confirmee
+        - name: date
+          in: query
+          description: Filtrer par date exacte
+          schema:
+            type: string
+            format: date
+          example: "2025-07-14"
+        - name: date_debut
+          in: query
+          description: Début de la période (avec date_fin)
+          schema:
+            type: string
+            format: date
+          example: "2025-07-01"
+        - name: date_fin
+          in: query
+          description: Fin de la période (avec date_debut)
+          schema:
+            type: string
+            format: date
+          example: "2025-07-31"
+        - name: restaurant_id
+          in: query
+          description: Filtrer par restaurant (utile pour les admins)
+          schema:
+            type: integer
+          example: 1
+        - name: user_id
+          in: query
+          description: Filtrer par client — admin seulement
+          schema:
+            type: integer
+          example: 2
+        - name: par_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+      responses:
+        "200":
+          description: Liste paginée des réservations
+        "401":
+          description: Non authentifié
+
+    post:
+      tags: [Réservations]
+      summary: Créer une réservation
+      description: |
+        Crée une réservation pour l'utilisateur connecté.
+        Vérifie automatiquement que la table est disponible et que sa capacité est suffisante.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationInput"
+            example:
+              table_id: 2
+              date_reservation: "2025-07-14"
+              heure_reservation: "20:00"
+              nombre_personnes: 3
+              notes: "Baptême de bébé, merci de prévoir une nappe spéciale."
+      responses:
+        "201":
+          description: Réservation créée avec succès
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Réservation créée avec succès !"
+                  reservation:
+                    $ref: "#/components/schemas/Reservation"
+        "422":
+          description: |
+            Erreur de validation. Causes possibles :
+            - Table déjà réservée à cette date/heure
+            - Nombre de personnes dépasse la capacité de la table
+            - Date dans le passé
+
+  /reservations/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identifiant de la réservation
+        schema:
+          type: integer
+        example: 1
+
+    get:
+      tags: [Réservations]
+      summary: Voir une réservation
+      description: Un client ne peut voir que ses propres réservations. Un admin peut voir toutes.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Détails de la réservation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reservation:
+                    $ref: "#/components/schemas/Reservation"
+        "403":
+          description: Accès refusé — pas votre réservation
+        "404":
+          description: Réservation introuvable
+
+    put:
+      tags: [Réservations]
+      summary: Modifier une réservation
+      description: |
+        **Client** peut modifier : date, heure, nombre de personnes, notes.
+        **Admin** peut aussi changer : statut, table.
+        Impossible de modifier une réservation annulée ou terminée.
+      security:
+        - BearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReservationModification"
+            example:
+              date_reservation: "2025-07-15"
+              heure_reservation: "19:00"
+              nombre_personnes: 4
+              notes: "Réunion de famille, prévoir plus d'espace."
+      responses:
+        "200":
+          description: Réservation mise à jour
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Réservation mise à jour."
+                  reservation:
+                    $ref: "#/components/schemas/Reservation"
+        "403":
+          description: Accès refusé
+        "422":
+          description: Réservation non modifiable ou table non disponible
+
+    delete:
+      tags: [Réservations]
+      summary: Annuler une réservation
+      description: |
+        Change le statut de la réservation à "annulee".
+        La réservation n'est PAS supprimée — elle reste dans l'historique.
+      security:
+        - BearerAuth: []
+      responses:
+        "200":
+          description: Réservation annulée
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Réservation annulée avec succès."
+        "403":
+          description: Accès refusé
+        "404":
+          description: Réservation introuvable
+
+  /mes-reservations:
+    get:
+      tags: [Réservations]
+      summary: Mon historique de réservations
+      description: Retourne toutes les réservations de l'utilisateur connecté, du plus récent au plus ancien.
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: par_page
+          in: query
+          description: Nombre de résultats par page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        "200":
+          description: Historique des réservations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  utilisateur:
+                    type: string
+                    example: "Ebenezer Dossou"
+                  reservations:
+                    type: object
+                    description: Liste paginée des réservations
+        "401":
+          description: Non authentifié
+
+# ================================================================
+# COMPOSANTS RÉUTILISABLES
+# ================================================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: Token
+      description: |
+        Token obtenu via POST /api/login.
+        À envoyer dans le header : `Authorization: Bearer VOTRE_TOKEN`
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: Koffi Adjovi
+        email:
+          type: string
+          example: admin@resto-benin.com
+        role:
+          type: string
+          enum: [client, admin]
+          example: admin
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-03-27T10:00:00Z"
+
+    Restaurant:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nom:
+          type: string
+          example: "La Terrasse de Cotonou"
+        description:
+          type: string
+          nullable: true
+          example: "Restaurant traditionnel béninois avec spécialités de sauce arachide et poisson braisé."
+        adresse:
+          type: string
+          example: "Quartier Cadjehoun, Avenue Jean-Paul II, Cotonou"
+        telephone:
+          type: string
+          example: "+229 97 12 34 56"
+        email:
+          type: string
+          nullable: true
+          example: "contact@terrasse-cotonou.bj"
+        horaires:
+          type: string
+          nullable: true
+          example: "Mar-Dim : 11h-15h et 18h-22h30"
+        actif:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+
+    RestaurantAvecTables:
+      allOf:
+        - $ref: "#/components/schemas/Restaurant"
+        - type: object
+          properties:
+            tables:
+              type: array
+              items:
+                $ref: "#/components/schemas/Table"
+
+    RestaurantInput:
+      type: object
+      required: [nom, adresse, telephone]
+      properties:
+        nom:
+          type: string
+          example: "Le Maquis du Port"
+        description:
+          type: string
+          nullable: true
+        adresse:
+          type: string
+          example: "Boulevard de la Marina, Cotonou"
+        telephone:
+          type: string
+          example: "+229 97 00 11 22"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "maquis@port.bj"
+        horaires:
+          type: string
+          nullable: true
+          example: "Lun-Dim : 10h-23h"
+        actif:
+          type: boolean
+          default: true
+
+    Table:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        restaurant_id:
+          type: integer
+          example: 1
+        numero:
+          type: string
+          example: "Table 2"
+        capacite:
+          type: integer
+          example: 4
+        emplacement:
+          type: string
+          nullable: true
+          example: "Terrasse extérieure"
+        disponible:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+
+    TableInput:
+      type: object
+      required: [numero, capacite]
+      properties:
+        numero:
+          type: string
+          example: "Table 10"
+        capacite:
+          type: integer
+          minimum: 1
+          maximum: 50
+          example: 4
+        emplacement:
+          type: string
+          nullable: true
+          example: "Intérieur climatisé"
+        disponible:
+          type: boolean
+          default: true
+
+    Reservation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 2
+        table_id:
+          type: integer
+          example: 2
+        date_reservation:
+          type: string
+          format: date
+          example: "2025-07-14"
+        heure_reservation:
+          type: string
+          example: "19:30"
+        nombre_personnes:
+          type: integer
+          example: 3
+        statut:
+          type: string
+          enum: [en_attente, confirmee, annulee, terminee]
+          example: confirmee
+        notes:
+          type: string
+          nullable: true
+          example: "Baptême de bébé, fleurs sur la table svp."
+        created_at:
+          type: string
+          format: date-time
+        client:
+          $ref: "#/components/schemas/User"
+        table:
+          $ref: "#/components/schemas/Table"
+
+    ReservationInput:
+      type: object
+      required:
+        [table_id, date_reservation, heure_reservation, nombre_personnes]
+      properties:
+        table_id:
+          type: integer
+          example: 2
+        date_reservation:
+          type: string
+          format: date
+          example: "2025-07-14"
+        heure_reservation:
+          type: string
+          example: "19:30"
+        nombre_personnes:
+          type: integer
+          minimum: 1
+          example: 3
+        notes:
+          type: string
+          nullable: true
+          example: "Pas de piment svp."
+
+    ReservationModification:
+      type: object
+      description: Tous les champs sont optionnels. Seul l'admin peut changer le statut et la table.
+      properties:
+        date_reservation:
+          type: string
+          format: date
+          example: "2025-07-15"
+        heure_reservation:
+          type: string
+          example: "20:00"
+        nombre_personnes:
+          type: integer
+          minimum: 1
+          example: 4
+        notes:
+          type: string
+          nullable: true
+        statut:
+          type: string
+          enum: [en_attente, confirmee, annulee, terminee]
+          description: Admin seulement
+          example: confirmee
+        table_id:
+          type: integer
+          description: Admin seulement
+          example: 3
+
+    PaginatedRestaurants:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/Restaurant"
+        current_page:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 3
+        per_page:
+          type: integer
+          example: 15
+        total:
+          type: integer
+          example: 42
+        next_page_url:
+          type: string
+          nullable: true
+          example: "http://127.0.0.1:8000/api/restaurants?page=2"
+        prev_page_url:
+          type: string
+          nullable: true
+          example: null
+
+    ErreurValidation:
+      type: object
+      properties:
+        message:
+          type: string
+          example: "The email has already been taken."
+        errors:
+          type: object
+          example:
+            email: ["The email has already been taken."]
+            password: ["The password must be at least 6 characters."]
