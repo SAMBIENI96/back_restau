@@ -117,17 +117,6 @@ L'API est accessible sur : **http://127.0.0.1:8000/api**
 
 ---
 
-## 📄 Documentation Swagger
-
-La documentation complète de l'API est disponible dans le fichier `swagger.yaml`.
-
-Pour la visualiser :
-
-1. Va sur **[editor.swagger.io](https://editor.swagger.io)**
-2. Colle le contenu du fichier `swagger.yaml`
-
----
-
 ## 🎨 Interface de test
 
 Un testeur frontend est inclus dans `public/testeur-api.html`.
